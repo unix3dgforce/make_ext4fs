@@ -38,7 +38,7 @@ extern "C" {
 #include <setjmp.h>
 #include <stdint.h>
 
-#if defined(__CYGWIN__) || defined(__APPLE__) && defined(__MACH__)
+#if defined(__APPLE__) && defined(__MACH__)
 #define lseek64 lseek
 #define ftruncate64 ftruncate
 #define mmap64 mmap
@@ -57,8 +57,10 @@ extern int force;
 
 #define EXT4_JNL_BACKUP_BLOCKS 1
 
+#ifndef __cplusplus
 #ifndef min /* already defined by windows.h */
 #define min(a, b) ((a) < (b) ? (a) : (b))
+#endif
 #endif
 
 #define DIV_ROUND_UP(x, y) (((x) + (y) - 1)/(y))
@@ -73,9 +75,13 @@ extern int force;
 #ifdef __LP64__
 typedef unsigned long u64;
 typedef signed long s64;
+
+#define PRIext4u64 "lu"
 #else
 typedef unsigned long long u64;
 typedef signed long long s64;
+
+#define PRIext4u64 PRIu64
 #endif
 typedef unsigned int u32;
 typedef unsigned short int u16;
@@ -99,6 +105,8 @@ struct ext2_group_desc {
 
 struct fs_aux_info {
 	struct ext4_super_block *sb;
+	struct ext4_super_block *sb_block;
+	struct ext4_super_block *sb_zero;
 	struct ext4_super_block **backup_sb;
 	struct ext2_group_desc *bg_desc;
 	struct block_group_info *bgs;
@@ -109,59 +117,22 @@ struct fs_aux_info {
 	u32 groups;
 	u32 bg_desc_blocks;
 	u32 default_i_flags;
-	u32 blocks_per_ind;
-	u32 blocks_per_dind;
-	u32 blocks_per_tind;
+	u64 blocks_per_ind;
+	u64 blocks_per_dind;
+	u64 blocks_per_tind;
 };
 
 extern struct fs_info info;
 extern struct fs_aux_info aux_info;
-extern struct sparse_file *ext4_sparse_file;
 
 extern jmp_buf setjmp_env;
 
-static inline int log_2(int j)
-{
-	int i;
+int bitmap_get_bit(u8 *bitmap, u32 bit);	// vold
+u64 get_block_device_size(int fd);		// recovery
+int is_block_device_fd(int fd);			// wipe.c
+u64 get_file_size(int fd);			// fs_mgr
 
-	for (i = 0; j > 0; i++)
-		j >>= 1;
-
-	return i - 1;
-}
-
-int bitmap_get_bit(u8 *bitmap, u32 bit);
-void bitmap_clear_bit(u8 *bitmap, u32 bit);
-int ext4_bg_has_super_block(int bg);
-void read_sb(int fd, struct ext4_super_block *sb);
-void write_sb(int fd, unsigned long long offset, struct ext4_super_block *sb);
-void write_ext4_image(int fd, int gz, int sparse, int crc);
-void ext4_create_fs_aux_info(void);
-void ext4_free_fs_aux_info(void);
-void ext4_fill_in_sb(void);
-void ext4_create_resize_inode(void);
-void ext4_create_journal_inode(void);
-void ext4_update_free(void);
-void ext4_queue_sb(void);
-u64 get_block_device_size(int fd);
-int is_block_device_fd(int fd);
-u64 get_file_size(int fd);
-u64 parse_num(const char *arg);
-void ext4_parse_sb_info(struct ext4_super_block *sb);
-u16 ext4_crc16(u16 crc_in, const void *buf, int size);
-
-typedef void (*fs_config_func_t)(const char *path, int dir, unsigned *uid, unsigned *gid,
-		unsigned *mode, uint64_t *capabilities);
-
-struct selabel_handle;
-
-int make_ext4fs_internal(int fd, const char *directory,
-						 const char *mountpoint, fs_config_func_t fs_config_func, int gzip,
-						 int sparse, int crc, int wipe,
-						 struct selabel_handle *sehnd, int verbose, time_t fixed_time,
-						 FILE* block_list_file);
-
-int read_ext(int fd, int verbose);
+int read_ext(int fd, int verbose);		// vold
 
 #ifdef __cplusplus
 }

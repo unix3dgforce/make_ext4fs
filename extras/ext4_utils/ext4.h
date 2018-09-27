@@ -302,11 +302,12 @@ struct move_extent {
 #define EXT4_EPOCH_MASK ((1 << EXT4_EPOCH_BITS) - 1)
 #define EXT4_NSEC_MASK (~0UL << EXT4_EPOCH_BITS)
 
-#define EXT4_FITS_IN_INODE(ext4_inode, einode, field)   ((offsetof(typeof(*ext4_inode), field) +   sizeof((ext4_inode)->field))   <= (EXT4_GOOD_OLD_INODE_SIZE +   (einode)->i_extra_isize))  
+#define EXT4_FITS_IN_INODE(ext4_inode, einode, field) ((offsetof(typeof(*(ext4_inode)), field) +   sizeof((ext4_inode)->field))   <= (EXT4_GOOD_OLD_INODE_SIZE +   (einode)->i_extra_isize))
 #define EXT4_INODE_SET_XTIME(xtime, inode, raw_inode)  do {   (raw_inode)->xtime = cpu_to_le32((inode)->xtime.tv_sec);   if (EXT4_FITS_IN_INODE(raw_inode, EXT4_I(inode), xtime ## _extra))   (raw_inode)->xtime ## _extra =   ext4_encode_extra_time(&(inode)->xtime);  } while (0)
 #define EXT4_EINODE_SET_XTIME(xtime, einode, raw_inode)  do {   if (EXT4_FITS_IN_INODE(raw_inode, einode, xtime))   (raw_inode)->xtime = cpu_to_le32((einode)->xtime.tv_sec);   if (EXT4_FITS_IN_INODE(raw_inode, einode, xtime ## _extra))   (raw_inode)->xtime ## _extra =   ext4_encode_extra_time(&(einode)->xtime);  } while (0)
-#define EXT4_INODE_GET_XTIME(xtime, inode, raw_inode)  do {   (inode)->xtime.tv_sec = (signed)le32_to_cpu((raw_inode)->xtime);   if (EXT4_FITS_IN_INODE(raw_inode, EXT4_I(inode), xtime ## _extra))   ext4_decode_extra_time(&(inode)->xtime,   raw_inode->xtime ## _extra);  } while (0)
-#define EXT4_EINODE_GET_XTIME(xtime, einode, raw_inode)  do {   if (EXT4_FITS_IN_INODE(raw_inode, einode, xtime))   (einode)->xtime.tv_sec =   (signed)le32_to_cpu((raw_inode)->xtime);   if (EXT4_FITS_IN_INODE(raw_inode, einode, xtime ## _extra))   ext4_decode_extra_time(&(einode)->xtime,   raw_inode->xtime ## _extra);  } while (0)
+#define EXT4_INODE_GET_XTIME(xtime, inode, raw_inode)  do {   (inode)->xtime.tv_sec = (signed)le32_to_cpu((raw_inode)->xtime);   if (EXT4_FITS_IN_INODE(raw_inode, EXT4_I(inode), xtime ## _extra)) ext4_decode_extra_time(&(inode)->xtime,   (raw_inode)->xtime ## _extra);  } while (0)
+
+#define EXT4_EINODE_GET_XTIME(xtime, einode, raw_inode)  do {   if (EXT4_FITS_IN_INODE(raw_inode, einode, xtime))   (einode)->xtime.tv_sec =   (signed)le32_to_cpu((raw_inode)->xtime);   if (EXT4_FITS_IN_INODE(raw_inode, einode, xtime ## _extra))   ext4_decode_extra_time(&(einode)->xtime,   (raw_inode)->xtime ## _extra);  } while (0)
 #define i_disk_version osd1.linux1.l_i_version
 
 #define i_reserved1 osd1.linux1.l_i_reserved1
@@ -492,6 +493,9 @@ struct ext4_super_block {
 #define EXT4_FEATURE_RO_COMPAT_GDT_CSUM 0x0010
 #define EXT4_FEATURE_RO_COMPAT_DIR_NLINK 0x0020
 #define EXT4_FEATURE_RO_COMPAT_EXTRA_ISIZE 0x0040
+#define EXT4_FEATURE_RO_COMPAT_HAS_SNAPSHOT 0x0080
+#define EXT4_FEATURE_RO_COMPAT_QUOTA 0x0100
+#define EXT4_FEATURE_RO_COMPAT_BIGALLOC 0x0200
 
 #define EXT4_FEATURE_INCOMPAT_COMPRESSION 0x0001
 #define EXT4_FEATURE_INCOMPAT_FILETYPE 0x0002
@@ -504,6 +508,7 @@ struct ext4_super_block {
 #define EXT4_FEATURE_INCOMPAT_FLEX_BG 0x0200
 #define EXT4_FEATURE_INCOMPAT_EA_INODE 0x0400  
 #define EXT4_FEATURE_INCOMPAT_DIRDATA 0x1000  
+#define EXT4_FEATURE_INCOMPAT_ENCRYPT 0x10000
 
 #define EXT4_FEATURE_COMPAT_SUPP EXT2_FEATURE_COMPAT_EXT_ATTR
 #define EXT4_FEATURE_INCOMPAT_SUPP (EXT4_FEATURE_INCOMPAT_FILETYPE|   EXT4_FEATURE_INCOMPAT_RECOVER|   EXT4_FEATURE_INCOMPAT_META_BG|   EXT4_FEATURE_INCOMPAT_EXTENTS|   EXT4_FEATURE_INCOMPAT_64BIT|   EXT4_FEATURE_INCOMPAT_FLEX_BG)
@@ -562,7 +567,7 @@ struct ext4_dir_entry_2 {
 #define EXT4_DIR_REC_LEN(name_len) (((name_len) + 8 + EXT4_DIR_ROUND) &   ~EXT4_DIR_ROUND)
 #define EXT4_MAX_REC_LEN ((1<<16)-1)
 
-#define is_dx(dir) (EXT4_HAS_COMPAT_FEATURE(dir->i_sb,   EXT4_FEATURE_COMPAT_DIR_INDEX) &&   (EXT4_I(dir)->i_flags & EXT4_INDEX_FL))
+#define is_dx(dir) (EXT4_HAS_COMPAT_FEATURE((dir)->i_sb,   EXT4_FEATURE_COMPAT_DIR_INDEX) &&   (EXT4_I(dir)->i_flags & EXT4_INDEX_FL))
 #define EXT4_DIR_LINK_MAX(dir) (!is_dx(dir) && (dir)->i_nlink >= EXT4_LINK_MAX)
 #define EXT4_DIR_LINK_EMPTY(dir) ((dir)->i_nlink == 2 || (dir)->i_nlink == 1)
 

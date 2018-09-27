@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef _LIBSPARSE_SPARSE_CRC32_H_
-#define _LIBSPARSE_SPARSE_CRC32_H_
+#ifndef _EXT4_CRYPT_INIT_EXTENSIONS_H_
+#define _EXT4_CRYPT_INIT_EXTENSIONS_H_
 
-#include <stdint.h>
+#include <sys/cdefs.h>
+#include <stdbool.h>
+#include <cutils/multiuser.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+__BEGIN_DECLS
 
-uint32_t sparse_crc32(uint32_t crc, const void *buf, size_t size);
+// These functions assume they are being called from init
+// They will not operate properly outside of init
+int e4crypt_install_keyring();
+int e4crypt_set_directory_policy(const char* path);
 
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
 
-#endif
+#endif // _EXT4_CRYPT_INIT_EXTENSIONS_H_

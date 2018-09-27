@@ -17,7 +17,11 @@
 #ifndef _WIPE_H_
 #define _WIPE_H_
 
-#include "ext4_utils.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "ext4_utils/ext4_utils.h"
 
 /* Set WIPE_IS_SUPPORTED to 1 if the current platform supports
  * wiping of block devices. 0 otherwise. For now, only Linux does.
@@ -29,5 +33,9 @@
 #endif
 
 int wipe_block_device(int fd, s64 len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
